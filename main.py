@@ -22,10 +22,10 @@ def most_annual_precip(dict):
     monthly_precip = {}
 
     for date, precip in dict['PRECIP']:
-        # last two digits in yyyymm
+        # last two digits in yyyymm format
         month = date[-2:]
 
-        # skip "date" header
+        # skip "date" header and skip any other non-dates
         try:
             precip_value = float(precip)
         except ValueError:
@@ -77,7 +77,7 @@ def create_merged_csv(region1_dict, region2_dict, filename):
             "date,region1_tmin,region2_tmin,region1_tmax,region2_tmax,"
             "region1_tavg,region2_tavg,region1_precip,region2_precip\n")
 
-        # Go through each date and find corresponding data from both dictionaries
+        # go through dates and get data from each dictionary
         for date in sorted_dates:
 
             region1_tmin = region2_tmin = 0
@@ -85,7 +85,7 @@ def create_merged_csv(region1_dict, region2_dict, filename):
             region1_tavg = region2_tavg = 0
             region1_precip = region2_precip = 0
 
-            # Get data from region 1
+            # get data from region 1
             if 'TMIN' in region1_dict:
                 for d, temp in region1_dict['TMIN']:
                     if d == date:
@@ -106,7 +106,7 @@ def create_merged_csv(region1_dict, region2_dict, filename):
                     if d == date:
                         region1_precip = precip
 
-            # Get data from region 2
+            # get data from region 2
             if 'TMIN' in region2_dict:
                 for d, temp in region2_dict['TMIN']:
                     if d == date:
@@ -146,15 +146,17 @@ def compare_monthly_avg_temps(region1_dict, region2_dict, month, filename):
     """
     results = {}
 
-    for key, records in region1_dict.items():
-        for date, temp in records:
+    # get region 1 temps
+    for key, entries in region1_dict.items():
+        for date, temp in entriess:
             if date.endswith(month):
                 if date not in results:
                     results[date] = {'Region1': [], 'Region2': []}
                 results[date]['Region1'].append(float(temp))
 
-    for key, records in region2_dict.items():
-        for date, temp in records:
+    # get region 2 temps
+    for key, entries in region2_dict.items():
+        for date, temp in entries:
             if date.endswith(month):
                 if date not in results:
                     results[date] = {'Region1': [], 'Region2': []}
@@ -163,12 +165,14 @@ def compare_monthly_avg_temps(region1_dict, region2_dict, month, filename):
     with open(filename, 'w') as file:
         file.write("Date,Region1,Region2,Difference\n")
 
+        # calculate differences
         for date in sorted(results.keys()):
             region1_avg = sum(results[date]['Region1']) / len(results[date]['Region1'])
             region2_avg = sum(results[date]['Region2']) / len(results[date]['Region2'])
 
             difference = region1_avg - region2_avg
 
+            # one decimal point
             file.write(
                 f"{date},{region1_avg:.1f},{region2_avg:.1f},{difference:.1f}\n")
 
